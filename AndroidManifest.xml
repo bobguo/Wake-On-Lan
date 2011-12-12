@@ -28,6 +28,21 @@
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
+			<intent-filter>
+				<action android:name="net.mafro.android.wakeonlan.WAKE" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</activity>
+
+		<activity android:name=".ShortcutActivity"
+				  android:label="@string/app_name"
+				  android:launchMode="singleInstance"
+				  android:noHistory="true">
+
+			<intent-filter>
+				<action android:name="android.intent.action.CREATE_SHORTCUT" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
 		</activity>
 
 		<provider android:name="HistoryProvider" 

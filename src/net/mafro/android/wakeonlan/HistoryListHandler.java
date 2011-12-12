@@ -28,6 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package net.mafro.android.wakeonlan;
 
+import android.app.Activity;
+
 import android.content.ContentValues;
 
 import android.database.Cursor;
@@ -51,9 +53,10 @@ public class HistoryListHandler implements OnItemClickListener
 
 	public static final String TAG = "HistoryListHandler";
 
-	private WakeOnLanActivity wol;
+	private Activity parent;
 	private Cursor cursor;
 	private HistoryAdapter adapter;
+
 
 	private static final String[] PROJECTION = new String[]
 	{
@@ -70,9 +73,9 @@ public class HistoryListHandler implements OnItemClickListener
 	private ListView view = null;
 
 
-	public HistoryListHandler(WakeOnLanActivity wol, ListView view)
+	public HistoryListHandler(Activity parent, ListView view)
 	{
-		this.wol = wol;
+		this.parent = parent;
 		this.view = view;
 	}
 
@@ -91,9 +94,15 @@ public class HistoryListHandler implements OnItemClickListener
 			break;
 		}
 
+		//determine if we render the favourite star buttons
+		boolean showStars = false;
+		if(parent instanceof WakeOnLan) { 
+			showStars = true;
+		}
+
 		//load History cursor via custom ResourceAdapter
-		cursor = wol.getContentResolver().query(History.Items.CONTENT_URI, PROJECTION, null, null, orderBy);
-		adapter = new HistoryAdapter(wol, cursor);
+		cursor = parent.getContentResolver().query(History.Items.CONTENT_URI, PROJECTION, null, null, orderBy);
+		adapter = new HistoryAdapter(parent, cursor, showStars);
 
 		//register self as listener for item clicks
 		view.setOnItemClickListener(this);
@@ -103,15 +112,24 @@ public class HistoryListHandler implements OnItemClickListener
 	}
 
 
-	public void onItemClick(AdapterView parent, View v, int position, long id)
+	public void onItemClick(AdapterView av, View v, int position, long id)
 	{
 		if(position >= 0) {
 			//extract item at position of click
 			HistoryItem item = getItem(position);
 
-			//update used count in DB
-			if(wol.sendPacket(item) != null) {
-				incrementHistory(id);
+			//there are two different behaviours here, depending who our parent is
+			if(parent instanceof WakeOnLan) {
+				WakeOnLan wol = (WakeOnLan) this.parent;
+
+				//update used count in DB
+				if(wol.sendPacket(item) != null) {
+					incrementHistory(id);
+				}
+
+			}else{
+				ShortcutActivity sh = (ShortcutActivity) this.parent;
+				sh.createShortcut(item);
 			}
 		}
 	}
@@ -155,7 +173,7 @@ public class HistoryListHandler implements OnItemClickListener
 			values.put(History.Items.MAC, mac);
 			values.put(History.Items.IP, ip);
 			values.put(History.Items.PORT, port);
-			wol.getContentResolver().insert(History.Items.CONTENT_URI, values);
+			((WakeOnLan) this.parent).getContentResolver().insert(History.Items.CONTENT_URI, values);
 		}
 	}
 
@@ -168,7 +186,7 @@ public class HistoryListHandler implements OnItemClickListener
 		values.put(History.Items.PORT, port);
 
 		Uri itemUri = Uri.withAppendedPath(History.Items.CONTENT_URI, Integer.toString(id));
-		wol.getContentResolver().update(itemUri, values, null, null);
+		((WakeOnLan) this.parent).getContentResolver().update(itemUri, values, null, null);
 	}
 
 	public void incrementHistory(long id)
@@ -181,14 +199,14 @@ public class HistoryListHandler implements OnItemClickListener
 		values.put(History.Items.LAST_USED_DATE, Long.valueOf(System.currentTimeMillis()));
 
 		Uri itemUri = Uri.withAppendedPath(History.Items.CONTENT_URI, Long.toString(id));
-		wol.getContentResolver().update(itemUri, values, null, null);
+		((WakeOnLan) this.parent).getContentResolver().update(itemUri, values, null, null);
 	}
 
 	public void deleteHistory(int id)
 	{
 		//use HistoryProvider to remove this row
 		Uri itemUri = Uri.withAppendedPath(History.Items.CONTENT_URI, Integer.toString(id));
-		wol.getContentResolver().delete(itemUri, null, null);
+		((WakeOnLan) this.parent).getContentResolver().delete(itemUri, null, null);
 	}
 
 }

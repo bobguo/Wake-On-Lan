@@ -33,6 +33,7 @@ import android.app.LocalActivityManager;
 
 import android.os.Bundle;
 
+import android.content.Intent;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.content.ContentValues;
@@ -59,6 +60,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuInflater;
+
+import android.net.Uri;
 
 
 /**
@@ -104,6 +107,13 @@ public class WakeOnLanActivity extends Activity implements OnClickListener, OnTa
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+		
+		Intent i = getIntent();
+		if(i.getAction().equals("net.mafro.android.wakeonlan.WAKE")) {
+			Uri u = i.getData();
+			Log.d(TAG,"EGG! "+u.toString());
+		}
+
 		setContentView(R.layout.main);
 
 		//configure tabs
